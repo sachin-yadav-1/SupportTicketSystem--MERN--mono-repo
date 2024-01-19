@@ -12,7 +12,8 @@
   "author": "Sachin Yadav",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "mongoose": "^8.1.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
