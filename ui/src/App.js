@@ -1,7 +1,12 @@
 import React from "react";
+import { TicketScreen } from "./screens";
 
 const App = () => {
-  return <div>App</div>;
+  return (
+    <>
+      <TicketScreen />
+    </>
+  );
 };
 
 export default App;
