@@ -23,6 +23,42 @@ export const createNewAgent = catchAsync(async (data, next) => {
   return agent;
 });
 
-export const getNextAgent = async () => {
-  // Round robin algo
-};
+export const getNextAgent = catchAsync(async () => {
+  let agent = null;
+
+  const lastAssigned = await SupportAgentModel.findOne({ _lastAssigned: true });
+  if (lastAssigned) {
+    agent = await SupportAgentModel.findOne({ _id: { $gt: lastAssigned._id } });
+  }
+
+  if (!lastAssigned || !agent) {
+    agent = await SupportAgentModel.findOne({});
+  }
+
+  if (!agent) {
+    return next(new AppError("no agent available, create a new agent!", 404));
+  }
+
+  return {
+    prevAgentID: lastAssigned?._id || null,
+    nextAgentID: agent?._id || null,
+  };
+});
+
+export const updateAssignedAgent = catchAsync(async (data, next) => {
+  const { prevAgentID, nextAgentID } = data;
+
+  if (prevAgentID) {
+    await SupportAgentModel.findByIdAndUpdate(prevAgentID, {
+      _lastAssigned: false,
+    });
+  }
+
+  if (nextAgentID) {
+    await SupportAgentModel.findByIdAndUpdate(nextAgentID, {
+      _lastAssigned: true,
+    });
+  }
+
+  return;
+});

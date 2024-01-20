@@ -8,6 +8,6 @@ import {
 const router = Router();
 
 router.route("").post(createTicket).get(searchTickets);
-router.patch("assign", assignTicket);
+router.patch("/assign", assignTicket);
 
 export default router;

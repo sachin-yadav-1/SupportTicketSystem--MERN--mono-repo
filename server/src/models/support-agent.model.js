@@ -8,6 +8,7 @@ const SupportAgentSchema = new Schema(
     active: { type: Boolean, default: true },
     description: { type: String, required: true },
     dateCreated: { type: Date, default: Date.now() },
+    _lastAssigned: { type: Boolean, default: false },
   },
   { versionKey: false }
 );

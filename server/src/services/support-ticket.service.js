@@ -2,11 +2,13 @@ import { Types } from "mongoose";
 import SupportTicketModel from "../models/support-ticket.model.js";
 import AppError from "../utils/app-error.js";
 import catchAsync from "../utils/catch-async.js";
-import { getNextAgent } from "./support-agent.service.js";
+import { getNextAgent, updateAssignedAgent } from "./support-agent.service.js";
 
 export const createNewTicket = catchAsync(async (data, next) => {
   const ticket = await SupportTicketModel.create(data);
-  return ticket;
+  return await SupportTicketModel.findById(ticket._id).populate([
+    { path: "assignedTo", select: { _id: 1, name: 1 } },
+  ]);
 });
 
 export const searchAllTickets = async (data, next) => {
@@ -39,12 +41,28 @@ export const assignTicketByID = catchAsync(async (id, next) => {
     return next(new AppError("invalid ticket id.", 404, "NOT_FOUND_EXCEPTION"));
   }
 
-  const agentID = await getNextAgent();
+  if (ticket.status === "ASSIGNED") {
+    return next(
+      new AppError(
+        "ticket already assigned to an agent",
+        409,
+        "NOT_ACCEPTABLE_EXCEPTION"
+      )
+    );
+  }
 
-  ticket = await SupportTicketModel.findByIdAndUpdate(id, {
-    assignedTo: agentID,
-    status: "ASSIGNED",
-  });
+  const { prevAgentID, nextAgentID } = await getNextAgent();
+
+  ticket = await SupportTicketModel.findByIdAndUpdate(
+    id,
+    {
+      assignedTo: nextAgentID,
+      status: "ASSIGNED",
+    },
+    { new: true }
+  ).populate([{ path: "assignedTo", select: { _id: 1, name: 1 } }]);
+
+  await updateAssignedAgent({ prevAgentID, nextAgentID });
 
   return ticket;
 });
