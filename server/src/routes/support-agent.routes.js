@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { createAgent } from "../controllers/support-agent.controller.js";
+import {
+  createAgent,
+  searchAllAgents,
+} from "../controllers/support-agent.controller.js";
 
 const router = Router();
 
-router.post("", createAgent);
+router.route("").post(createAgent).get(searchAllAgents);
 
 export default router;

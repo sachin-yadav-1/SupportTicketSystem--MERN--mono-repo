@@ -14,24 +14,35 @@ export const createNewTicket = catchAsync(async (data, next) => {
 export const searchAllTickets = async (data, next) => {
   let { page, limit, sort, ...rest } = data;
   const filter = { ...rest };
+  sort = JSON.parse(sort);
 
   page = +page || 1;
   limit = +limit || 10;
   const skip = (page - 1) * limit;
 
-  if (filter.assignedTo) filter.assignedTo = Types.ObjectId(filter.assignedTo);
+  if (filter.assignedTo) {
+    filter.assignedTo = new Types.ObjectId(filter.assignedTo);
+  }
 
-  const res = await SupportTicketModel.aggregate([
-    { $match: filter },
-    // ...(sort && Object.keys(sort).length && { $sort: sort }),
-    {
-      $facet: {
-        metadata: [{ $count: "total" }, { $addFields: { page } }],
-        data: [{ $skip: skip }, { $limit: limit }],
-      },
+  const query = [{ $match: filter }];
+  if (sort && Object.keys(sort).length) query.push({ $sort: sort });
+  query.push({
+    $facet: {
+      metadata: [
+        { $count: "total" },
+        {
+          $addFields: {
+            page,
+            limit,
+            pages: { $ceil: { $divide: ["$total", limit] } },
+          },
+        },
+      ],
+      data: [{ $skip: skip }, { $limit: limit }],
     },
-  ]);
+  });
 
+  const res = await SupportTicketModel.aggregate(query);
   return res;
 };
 
@@ -45,7 +56,7 @@ export const assignTicketByID = catchAsync(async (id, next) => {
     return next(
       new AppError(
         "ticket already assigned to an agent",
-        409,
+        406,
         "NOT_ACCEPTABLE_EXCEPTION"
       )
     );
@@ -66,3 +77,42 @@ export const assignTicketByID = catchAsync(async (id, next) => {
 
   return ticket;
 });
+
+export const updateTicketByID = catchAsync(async (data, next) => {
+  const { id, ...update } = data;
+
+  if (update.status && update.status === "RESOLVED") {
+    if (ticket.status === "RESOLVED") {
+      return next(
+        new AppError(
+          "ticket already resolved.",
+          406,
+          "NOT_EXCEPTABLE_EXCEPTION"
+        )
+      );
+    }
+    update["resolvedOn"] = new Date();
+  }
+
+  ticket = await SupportTicketModel.findByIdAndUpdate(id, update, {
+    new: true,
+  }).populate([{ path: "assignedTo", select: { _id: 1, name: 1 } }]);
+
+  if (!ticket) {
+    return next(new AppError("invalid ticket ID.", 404, "NOT_FOUND_EXCEPTION"));
+  }
+
+  return ticket;
+});
+
+export const searchTicketByID = async (id, next) => {
+  const ticket = await SupportTicketModel.findById(id).populate([
+    { path: "assignedTo", select: { _id: 1, name: 1 } },
+  ]);
+
+  if (!ticket) {
+    return next(new AppError("invalid ticket ID", 404, "NOT_FOUND_EXCEPTION"));
+  }
+
+  return ticket;
+};
