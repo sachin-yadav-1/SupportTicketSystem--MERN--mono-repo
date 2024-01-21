@@ -1,10 +1,12 @@
 import React from "react";
-import { TicketScreen } from "./screens";
+import { Outlet } from "react-router-dom";
+import { Navbar } from "./components";
 
 const App = () => {
   return (
     <>
-      <TicketScreen />
+      <Navbar />
+      <Outlet />
     </>
   );
 };
