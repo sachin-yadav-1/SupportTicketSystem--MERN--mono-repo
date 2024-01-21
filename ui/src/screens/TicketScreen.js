@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Container from "react-bootstrap/Container";
 import Stack from "react-bootstrap/Stack";
-import { Filters, Table } from "../components";
+import { Filters, Modal, Pagination, Table } from "../components";
 
 const tableData = [
   {
@@ -148,9 +148,21 @@ const config = [
   },
 ];
 
-const keyFn = (ticket) => ticket._id 
+const keyFn = (ticket) => ticket._id;
 
 const TicketScreen = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [openedTicket, setOpenedTicket] = useState(null);
+
+  const openModal = (ticket) => {
+    setIsModalOpen(true);
+    setOpenedTicket(ticket);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <>
       <Container className="p-3">
@@ -158,9 +170,20 @@ const TicketScreen = () => {
           <Filters />
         </Stack>
         <Stack className="mt-2">
-          <Table data={tableData} config={config} keyFn={keyFn} />
+          <Table
+            data={tableData}
+            config={config}
+            keyFn={keyFn}
+            onCellClick={openModal}
+          />
+        </Stack>
+
+        <Stack className="align-items-center">
+          <Pagination />
         </Stack>
       </Container>
+
+      {isModalOpen && <Modal onCloseModal={closeModal} ticket={openedTicket} />}
     </>
   );
 };

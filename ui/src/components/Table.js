@@ -1,7 +1,11 @@
 import React from "react";
 import Table from "react-bootstrap/Table";
 
-const AppTable = ({ config, data, keyFn }) => {
+const AppTable = ({ config, data, keyFn, onCellClick }) => {
+  const handleOnCellClick = (entity) => {
+    onCellClick(entity);
+  };
+
   const renderedHeaders = config.map((c) => (
     <th key={c.label} className="fs-4 fw-bold border p-2">
       {c.label}
@@ -17,7 +21,11 @@ const AppTable = ({ config, data, keyFn }) => {
       );
     });
 
-    return <tr key={keyFn(entity)}>{renderedCells}</tr>;
+    return (
+      <tr onClick={() => handleOnCellClick(entity)} key={keyFn(entity)}>
+        {renderedCells}
+      </tr>
+    );
   });
   return (
     <Table bordered hover>
