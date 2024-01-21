@@ -1,12 +1,7 @@
 import React from "react";
-import { Navbar } from "../components";
 
 const TicketScreen = () => {
-  return (
-    <>
-      <Navbar />
-    </>
-  );
+  return <h1>Ticket Screen</h1>;
 };
 
 export default TicketScreen;
